@@ -1,19 +1,34 @@
+"use client";
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 const Settings = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
           <p className="text-muted-foreground mt-1">Update workspace and preferences.</p>
         </div>
 
+        {/* Workspace Config */}
         <Card>
           <CardHeader>
             <CardTitle>Workspace</CardTitle>
@@ -31,6 +46,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        {/* Preferences */}
         <Card>
           <CardHeader>
             <CardTitle>Preferences</CardTitle>
@@ -47,9 +63,9 @@ const Settings = () => {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <div className="font-medium text-foreground">Dark mode</div>
-                <div className="text-sm text-muted-foreground">Use system theme by default.</div>
+                <div className="text-sm text-muted-foreground">Switch between light and dark theme.</div>
               </div>
-              <Switch />
+              <Switch checked={isDarkMode} onCheckedChange={setIsDarkMode} />
             </div>
             <div className="md:col-span-2">
               <Button>Save changes</Button>

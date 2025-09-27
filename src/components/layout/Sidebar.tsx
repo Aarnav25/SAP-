@@ -6,6 +6,8 @@ import {
   BarChart3, 
   Users, 
   Settings,
+  QrCode,
+  Briefcase,
   Brain,
   LogOut
 } from "lucide-react";
@@ -17,7 +19,9 @@ const navigation = [
   { name: "Events", href: "/events", icon: Calendar },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Vendors", href: "/vendors", icon: Briefcase },
   { name: "Team", href: "/team", icon: Users },
+  { name: "QR Feedback", href: "/checkin", icon: QrCode },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

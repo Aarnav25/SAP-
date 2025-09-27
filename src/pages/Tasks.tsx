@@ -31,13 +31,29 @@ const Tasks = () => {
   const renderStatus = (status?: string) => {
     switch (status) {
       case "done":
+      case "completed":
         return <Badge variant="secondary" className="bg-success-light text-success"><CheckCircle className="inline h-3 w-3 mr-1"/> Done</Badge>;
       case "at_risk":
         return <Badge className="bg-warning text-warning-foreground"><AlertTriangle className="inline h-3 w-3 mr-1"/> At Risk</Badge>;
       default:
+      case "in_progress":
         return <Badge variant="outline"><Clock className="inline h-3 w-3 mr-1"/> In Progress</Badge>;
     }
   };
+
+  async function updateTaskStatus(id: string | number, status: string) {
+    // optimistic update
+    setTasks(prev => prev.map(t => (t.id === id ? { ...t, status } : t)));
+    try {
+      await fetch(`/api/tasks/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      // ignore if backend doesn't support yet
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -72,7 +88,12 @@ const Tasks = () => {
                       <div className="text-sm text-muted-foreground">Assignee: {t.assignee}</div>
                     )}
                   </div>
-                  {renderStatus(t.status)}
+                  <div className="flex items-center gap-2">
+                    {renderStatus(t.status)}
+                    <Button variant="outline" size="sm" onClick={() => updateTaskStatus(t.id, "in_progress")}>In Progress</Button>
+                    <Button variant="outline" size="sm" onClick={() => updateTaskStatus(t.id, "done")}>Completed</Button>
+                    <Button variant="outline" size="sm" onClick={() => updateTaskStatus(t.id, "at_risk")}>At Risk</Button>
+                  </div>
                 </div>
               ))
             )}

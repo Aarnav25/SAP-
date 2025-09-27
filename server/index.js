@@ -92,6 +92,51 @@ app.post('/api/auth/verify-otp', async (req, res) => {
   }
 });
 
+// Proxy endpoint to call Gemini API server-side
+app.post('/api/message', async (req, res) => {
+  try {
+    const { message } = req.body || {};
+    console.log('[api/message] incoming', { message: typeof message === 'string' ? message.slice(0, 120) : message });
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Missing message' });
+    }
+
+    const key = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    if (!key) {
+      return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY' });
+    }
+
+    const model = process.env.GEMINI_MODEL || 'gemini-pro';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    console.log('[api/message] calling Gemini', { url });
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: message }],
+          },
+        ],
+      }),
+    });
+
+    if (!r.ok) {
+      const text = await r.text();
+      console.error('[api/message] Gemini error', r.status, text);
+      return res.status(r.status).json({ error: 'Gemini error', details: text });
+    }
+
+    const data = await r.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('[api/message] success, reply length', reply.length);
+    return res.json({ reply });
+  } catch (err) {
+    console.error('proxy /api/message error', err);
+    return res.status(500).json({ error: 'Proxy failed', details: err?.message || String(err) });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Auth server listening on http://localhost:${PORT}`);
 });

@@ -33,6 +33,9 @@ const Events = () => {
     totalBudget: string;
     budgetAllocation: string;
     commsPlan: string;
+    headName: string;
+    headRole: string;
+    members: { name: string; role: string }[];
   }>({
     eventName: "",
     eventType: "",
@@ -52,6 +55,9 @@ const Events = () => {
     totalBudget: "",
     budgetAllocation: "",
     commsPlan: "",
+    headName: "",
+    headRole: "",
+    members: [],
   });
   const [submitting, setSubmitting] = useState(false);
   const [draggingId, setDraggingId] = useState<string | number | null>(null);
@@ -149,12 +155,15 @@ const Events = () => {
             allocation: form.budgetAllocation || "",
           },
           commsPlan: form.commsPlan || "",
+          head: form.headName.trim() ? { name: form.headName.trim(), role: form.headRole.trim() } : undefined,
+          members: (form.members || []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim() })),
           status: "planned",
         }),
       });
       const data = await res.json();
       if (data?.success) {
-        setEvents((prev) => [data.data, ...prev]);
+        // Ensure we reload from backend (Mongo/in-memory) for consistent state
+        await load();
         setForm({
           eventName: "",
           eventType: "",
@@ -174,6 +183,9 @@ const Events = () => {
           totalBudget: "",
           budgetAllocation: "",
           commsPlan: "",
+          headName: "",
+          headRole: "",
+          members: [],
         });
         setShowForm(false);
       } else {

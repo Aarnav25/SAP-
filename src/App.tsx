@@ -14,6 +14,9 @@ import Analytics from "./pages/Analytics";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Checkin from "./pages/Checkin";
+import Vendors from "./pages/Vendors";
+import Chatbot from "./pages/Chatbot.tsx";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +25,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      {/* Global Chatbot visible on all pages */}
+      <Chatbot />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -34,7 +39,9 @@ const App = () => (
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/team" element={<Team />} />
+          <Route path="/vendors" element={<Vendors />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/checkin" element={<Checkin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

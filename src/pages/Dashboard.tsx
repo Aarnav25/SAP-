@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -172,6 +172,97 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Compact Calendar */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Calendar</CardTitle>
+            <CardDescription>Month view with event highlights</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const [month, setMonth] = (function useMonth() {
+                const [m, setM] = useState(() => {
+                  const d = new Date();
+                  d.setDate(1);
+                  return d;
+                });
+                return [m, setM] as const;
+              })();
+
+              const monthLabel = useMemo(() => month.toLocaleString(undefined, { month: "long", year: "numeric" }), [month]);
+              const days = useMemo(() => {
+                const firstDay = new Date(month);
+                const startWeekday = firstDay.getDay();
+                const lastDayDate = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+                const cells: { date: Date | null; key: string }[] = [];
+                for (let i = 0; i < startWeekday; i++) cells.push({ date: null, key: `b-${i}` });
+                for (let d = 1; d <= lastDayDate; d++) cells.push({ date: new Date(month.getFullYear(), month.getMonth(), d), key: `d-${d}` });
+                while (cells.length % 7 !== 0) cells.push({ date: null, key: `t-${cells.length}` });
+                return cells;
+              }, [month]);
+
+              const eventsByDate = useMemo(() => {
+                const map: Record<string, Array<{ name: string; status?: string }>> = {};
+                for (const ev of events) {
+                  const ymd = (ev as any)?.schedule?.startDate?.slice(0,10) || (ev as any)?.date || "";
+                  if (!ymd) continue;
+                  map[ymd] ||= [];
+                  map[ymd].push({ name: ev.name, status: ev.status });
+                }
+                return map;
+              }, [events]);
+
+              const changeMonth = (delta: number) => {
+                const m = new Date(month);
+                m.setMonth(m.getMonth() + delta);
+                setMonth(m);
+              };
+
+              const statusColor = (status?: string) => {
+                switch (status) {
+                  case 'completed': return 'bg-success';
+                  case 'in_progress': return 'bg-warning';
+                  default: return 'bg-primary'; // planned/others
+                }
+              };
+
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <button className="text-sm px-2 py-1 border rounded" onClick={() => changeMonth(-1)}>&lt;</button>
+                    <span className="text-sm font-medium">{monthLabel}</span>
+                    <button className="text-sm px-2 py-1 border rounded" onClick={() => changeMonth(1)}>&gt;</button>
+                  </div>
+                  <div className="grid grid-cols-7 text-xs text-muted-foreground mb-1">
+                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(w => <div key={w} className="px-1 py-1">{w}</div>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {days.map(({ date, key }) => {
+                      if (!date) return <div key={key} className="h-16 rounded border bg-background/50" />;
+                      const ymd = date.toISOString().slice(0,10);
+                      const dayEvents = eventsByDate[ymd] || [];
+                      const isToday = new Date().toDateString() === date.toDateString();
+                      return (
+                        <div key={key} className={`h-16 p-1 rounded border overflow-hidden ${isToday ? 'ring-2 ring-primary' : ''}`}>
+                          <div className="text-[10px] font-semibold">{date.getDate()}</div>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {dayEvents.slice(0,3).map((ev, idx) => (
+                              <span key={idx} className={`inline-block w-2 h-2 rounded-full ${statusColor(ev.status)}`} title={ev.name}></span>
+                            ))}
+                            {dayEvents.length > 3 && (
+                              <span className="text-[10px] text-muted-foreground">+{dayEvents.length-3}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Risk Heatmap */}
