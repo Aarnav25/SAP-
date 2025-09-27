@@ -1,0 +1,54 @@
+# Hello World AI - Event Management Dashboard
+
+## Overview
+**Hello World AI** is a modern web platform for managing events, tasks, and teams with AI assistance.  
+It integrates analytics, task management, team coordination, and a smart AI chatbot with **text and audio interaction**.
+
+---
+
+## Features
+
+### Dashboard
+- High-level insights across events.
+- Task completion rates, predicted delays, team performance metrics.
+
+### Tasks
+- Create, assign, and track tasks.
+- Status indicators: **Done**, **At Risk**, **In Progress**.
+- Past task overview and resource allocation.
+
+### Team
+- Manage team members and roles.
+- Event-specific member allocation.
+- Heads of events highlighted.
+- View total members per event.
+
+### Settings
+- Workspace configuration (name, timezone).
+- Dark mode toggle for the entire platform.
+- Preferences for email notifications.
+
+### Chatbot
+- AI-powered assistant using **Gemini API**.
+- Text and audio input (speech recognition).
+- Text-to-speech responses.
+
+---
+
+## Tech Stack
+- **Frontend**: React + TypeScript
+- **UI Components**: shadcn/ui
+- **Styling**: TailwindCSS
+- **Icons**: lucide-react
+- **Charts**: Recharts (optional)
+- **AI Chatbot**: Gemini API
+- **Audio**: Web Speech API
+
+---
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/YOUR_USERNAME/hello-world-ai.git
+cd hello-world-ai
