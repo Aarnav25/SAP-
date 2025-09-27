@@ -8,33 +8,65 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Core Brand Colors - Deep Professional Blue */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 225 15% 15%;
 
+    /* Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 225 15% 15%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 225 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary Brand - Deep Blue */
+    --primary: 225 83% 53%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 225 83% 45%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Lighter Blue */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 225 15% 15%;
+    --secondary-hover: 220 14% 90%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted Backgrounds */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Professional Purple */
+    --accent: 250 84% 54%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: 250 84% 46%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 76% 96%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --warning-light: 48 96% 89%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-light: 0 93% 94%;
+
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 225 83% 53%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(225 83% 53%), hsl(250 84% 54%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 14% 96%), hsl(0 0% 100%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(160 84% 39%));
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(45 93% 47%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(225 15% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(225 15% 15% / 0.1), 0 2px 4px -1px hsl(225 15% 15% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(225 15% 15% / 0.1), 0 4px 6px -2px hsl(225 15% 15% / 0.05);
+    --shadow-glow: 0 0 20px hsl(225 83% 53% / 0.3);
 
     --radius: 0.5rem;
 
