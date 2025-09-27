@@ -1,58 +1,44 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
-  Users, 
-  Plus,
-  TrendingUp,
-  Brain
-} from "lucide-react";
+import { AlertTriangle, Plus, Brain } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 const Dashboard = () => {
-  // Mock data
-  const metrics = [
-    {
-      title: "Event Readiness",
-      value: "87%",
-      icon: CheckCircle,
-      color: "text-success",
-      bgColor: "bg-success-light"
-    },
-    {
-      title: "Pending Tasks",
-      value: "12",
-      icon: Clock,
-      color: "text-warning",
-      bgColor: "bg-warning-light"
-    },
-    {
-      title: "Upcoming Deadlines",
-      value: "5",
-      icon: Calendar,
-      color: "text-primary",
-      bgColor: "bg-primary/10"
-    },
-    {
-      title: "Team Members",
-      value: "24",
-      icon: Users,
-      color: "text-accent",
-      bgColor: "bg-accent/10"
-    }
-  ];
+  const navigate = useNavigate();
+  const [metrics, setMetrics] = useState<Array<{ title: string; value: string }>>([]);
+  const [recentTasks, setRecentTasks] = useState<Array<{ id: string | number; title: string; assignee?: string; deadline?: string; risk?: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [events, setEvents] = useState<Array<{ id: string | number; name: string; date?: string | null; status?: string; organiser?: { name?: string } }>>([]);
 
-  const recentTasks = [
-    { id: 1, title: "Venue Setup", assignee: "John Doe", deadline: "2024-01-15", risk: "low" },
-    { id: 2, title: "Catering Arrangements", assignee: "Jane Smith", deadline: "2024-01-14", risk: "high" },
-    { id: 3, title: "Sound System Check", assignee: "Mike Johnson", deadline: "2024-01-16", risk: "medium" },
-    { id: 4, title: "Registration Setup", assignee: "Sarah Wilson", deadline: "2024-01-13", risk: "low" },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        const [m, t, e] = await Promise.all([
+          fetch("/api/dashboard/metrics").then((r) => r.json()),
+          fetch("/api/dashboard/recent-tasks").then((r) => r.json()),
+          fetch("/api/events").then((r) => r.json()),
+        ]);
+        if (cancelled) return;
+        if (m?.success) setMetrics(m.data || []);
+        if (t?.success) setRecentTasks(t.data || []);
+        if (e?.success) setEvents(e.data || []);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Failed to load dashboard data");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getRiskBadge = (risk: string) => {
     switch (risk) {
@@ -83,7 +69,7 @@ const Dashboard = () => {
               <Brain className="mr-2 h-4 w-4" />
               Generate AI Plan
             </Button>
-            <Button variant="hero">
+            <Button variant="hero" onClick={() => navigate('/events')}>
               <Plus className="mr-2 h-4 w-4" />
               New Event
             </Button>
@@ -92,21 +78,99 @@ const Dashboard = () => {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((metric, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow duration-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+          {metrics.length === 0 && !loading ? (
+            <Card className="md:col-span-2 lg:col-span-4">
+              <CardContent className="p-6 text-sm text-muted-foreground">No metrics available.</CardContent>
+            </Card>
+          ) : (
+            metrics.map((metric, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow duration-200">
+                <CardContent className="p-6">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">{metric.value}</p>
                   </div>
-                  <div className={`p-3 rounded-full ${metric.bgColor}`}>
-                    <metric.icon className={`h-6 w-6 ${metric.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Events Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upcoming Events</CardTitle>
+              <CardDescription>Events planned or scheduled next.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loading ? (
+                <div className="text-sm text-muted-foreground">Loading...</div>
+              ) : (
+                (() => {
+                  const today = new Date();
+                  const upcoming = events.filter(ev => {
+                    if (ev.status === 'completed') return false;
+                    if (!ev.date) return true; // no date yet → treat as upcoming
+                    return new Date(ev.date) >= new Date(today.toDateString());
+                  }).slice(0, 6);
+                  return upcoming.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No upcoming events.</div>
+                  ) : (
+                    upcoming.map(ev => (
+                      <div key={ev.id} className="p-3 border rounded-md flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-foreground">{ev.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {ev.date ? new Date(ev.date).toDateString() : 'TBD'}
+                            {ev.organiser?.name ? ` • ${ev.organiser.name}` : ''}
+                          </div>
+                        </div>
+                        <Badge variant="secondary">{ev.status || 'planned'}</Badge>
+                      </div>
+                    ))
+                  );
+                })()
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Events</CardTitle>
+              <CardDescription>Recently completed or past events.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loading ? (
+                <div className="text-sm text-muted-foreground">Loading...</div>
+              ) : (
+                (() => {
+                  const today = new Date();
+                  const completed = events.filter(ev => {
+                    if (ev.status === 'completed') return true;
+                    if (!ev.date) return false;
+                    return new Date(ev.date) < new Date(today.toDateString());
+                  }).slice(0, 6);
+                  return completed.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No completed events.</div>
+                  ) : (
+                    completed.map(ev => (
+                      <div key={ev.id} className="p-3 border rounded-md flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-foreground">{ev.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {ev.date ? new Date(ev.date).toDateString() : 'No date'}
+                            {ev.organiser?.name ? ` • ${ev.organiser.name}` : ''}
+                          </div>
+                        </div>
+                        <Badge className="bg-success-light text-success">completed</Badge>
+                      </div>
+                    ))
+                  );
+                })()
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -117,28 +181,34 @@ const Dashboard = () => {
                 <AlertTriangle className="mr-2 h-5 w-5 text-warning" />
                 Risk Heatmap
               </CardTitle>
-              <CardDescription>
-                AI-powered risk assessment for your tasks
-              </CardDescription>
+              <CardDescription>AI-powered risk assessment for your tasks</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-3">
-                {recentTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all duration-200 ${
-                      task.risk === "high" 
-                        ? "bg-destructive-light border-destructive/20 hover:border-destructive/40" 
-                        : task.risk === "medium"
-                        ? "bg-warning-light border-warning/20 hover:border-warning/40"
-                        : "bg-success-light border-success/20 hover:border-success/40"
-                    }`}
-                  >
-                    <h4 className="font-medium text-sm text-foreground mb-2">{task.title}</h4>
-                    <p className="text-xs text-muted-foreground mb-2">{task.assignee}</p>
-                    {getRiskBadge(task.risk)}
-                  </div>
-                ))}
+                {loading ? (
+                  <div className="text-sm text-muted-foreground">Loading...</div>
+                ) : recentTasks.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No tasks found.</div>
+                ) : (
+                  recentTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        task.risk === "high"
+                          ? "bg-destructive-light border-destructive/20 hover:border-destructive/40"
+                          : task.risk === "medium"
+                          ? "bg-warning-light border-warning/20 hover:border-warning/40"
+                          : "bg-success-light border-success/20 hover:border-success/40"
+                      }`}
+                    >
+                      <h4 className="font-medium text-sm text-foreground mb-2">{task.title}</h4>
+                      {task.assignee && (
+                        <p className="text-xs text-muted-foreground mb-2">{task.assignee}</p>
+                      )}
+                      {getRiskBadge(task.risk || "")}
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -147,9 +217,7 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks and AI recommendations
-              </CardDescription>
+              <CardDescription>Common tasks and AI recommendations</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
@@ -157,49 +225,12 @@ const Dashboard = () => {
                 Create New Task
               </Button>
               <Button variant="outline" className="w-full justify-start">
-                <Calendar className="mr-2 h-4 w-4" />
-                Schedule Meeting
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
                 <Brain className="mr-2 h-4 w-4" />
                 AI Optimization
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                View Analytics
               </Button>
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Tasks</CardTitle>
-            <CardDescription>
-              Latest updates from your team
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/50 transition-colors duration-200">
-                  <div className="flex items-center space-x-4">
-                    <CheckCircle className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <h4 className="font-medium text-foreground">{task.title}</h4>
-                      <p className="text-sm text-muted-foreground">Assigned to {task.assignee}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-muted-foreground">{task.deadline}</span>
-                    {getRiskBadge(task.risk)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );
